@@ -4,6 +4,7 @@ The store is behind a tiny interface on purpose: swapping Chroma for a Bedrock
 Knowledge Base later means writing one more class, not touching the agents.
 """
 import re
+import threading
 from pathlib import Path
 from config import POLICY_DIR, CHROMA_DIR, EMBEDDINGS, AWS_REGION, TITAN_MODEL_ID
 
@@ -49,19 +50,33 @@ def _embedding_fn():
     return None          # Chroma's built-in local model, no AWS needed
 
 
+_LOCK = threading.Lock()
+_CLIENT = None
+_COL = None
+
+
 def _collection(reset=False):
+    """One client for the process. Strands runs tools in parallel, and a fresh
+    PersistentClient per call collides on the store."""
+    global _CLIENT, _COL
     import chromadb
-    client = chromadb.PersistentClient(path=str(CHROMA_DIR))
-    if reset:
-        try:
-            client.delete_collection(COLLECTION)
-        except Exception:
-            pass
-    kwargs = {"name": COLLECTION}
-    fn = _embedding_fn()
-    if fn:
-        kwargs["embedding_function"] = fn
-    return client.get_or_create_collection(**kwargs)
+    with _LOCK:
+        if _CLIENT is None:
+            _CLIENT = chromadb.PersistentClient(path=str(CHROMA_DIR))
+        client = _CLIENT
+        if reset:
+            _COL = None
+            try:
+                client.delete_collection(COLLECTION)
+            except Exception:
+                pass
+        if _COL is None:
+            kwargs = {"name": COLLECTION}
+            fn = _embedding_fn()
+            if fn:
+                kwargs["embedding_function"] = fn
+            _COL = client.get_or_create_collection(**kwargs)
+        return _COL
 
 
 def ingest():

@@ -45,6 +45,7 @@ def process(dispute_id: int) -> str:
         raise ValueError(f"no dispute {dispute_id}")
 
     token = agents.CURRENT.set(dispute_id)
+    sources_token = agents.SOURCES.set([])
     try:
         db.set_status(dispute_id, "processing")
         db.log(dispute_id, "system", "triage started")
@@ -83,16 +84,29 @@ def process(dispute_id: int) -> str:
             db.log(dispute_id, "guardrail", "output blocked, draft withheld", safe_answer)
             safe_answer = "The draft was blocked by the output guardrail and needs manual handling."
 
+        # The agent returns internal notes, a marker, then the member letter. Keep them apart:
+        # the reviewer sees the notes in the trace, the member only ever sees the letter.
+        if agents.MEMBER_MARKER in safe_answer:
+            notes, member_msg = safe_answer.split(agents.MEMBER_MARKER, 1)
+            db.log(dispute_id, "case_agent", "internal triage notes", notes.strip())
+            member_msg = member_msg.strip()
+        else:
+            member_msg = safe_answer
+
         summary = _extract(model, safe_answer)
+        # Cite what was actually retrieved, not what the model recalls citing.
+        retrieved = agents.SOURCES.get() or []
+        citations = retrieved or summary["citations"]
         db.log(dispute_id, "system", "classified the draft", summary)
-        db.save_draft(dispute_id, safe_answer, summary["recommendation"],
-                      summary["amount_cents"], summary["citations"])
+        db.save_draft(dispute_id, member_msg, summary["recommendation"],
+                      summary["amount_cents"], citations)
         db.set_status(dispute_id, "awaiting_approval")
         db.log(dispute_id, "system", "waiting for a human reviewer")
-        return safe_answer
+        return member_msg
     except Exception as e:
         db.log(dispute_id, "system", "triage failed", f"{type(e).__name__}: {e}")
         db.set_status(dispute_id, "submitted")      # leave it for a retry
         raise
     finally:
         agents.CURRENT.reset(token)
+        agents.SOURCES.reset(sources_token)

@@ -18,6 +18,12 @@ from config import (MODEL_PROVIDER, BEDROCK_MODEL_ID, ANTHROPIC_MODEL_ID, AWS_RE
 # Which dispute the current run belongs to, so tools can write to the right trace.
 CURRENT: ContextVar[int] = ContextVar("current_dispute", default=0)
 
+# Sources touched during one run, so the draft can cite what was actually retrieved
+# rather than whatever the model remembers having read.
+SOURCES: ContextVar[list] = ContextVar("sources", default=None)
+
+MEMBER_MARKER = "---MEMBER MESSAGE---"
+
 
 def build_model():
     """Bedrock is the target. Anthropic direct keeps the demo runnable without AWS."""
@@ -36,8 +42,9 @@ def build_model():
     key = os.environ.get("ANTHROPIC_API_KEY")
     if not key:
         raise RuntimeError("Set ANTHROPIC_API_KEY, or set MODEL_PROVIDER=bedrock with working AWS credentials.")
+    # note: this SDK version rejects temperature through its streaming helper, so it is omitted
     return AnthropicModel(client_args={"api_key": key}, model_id=ANTHROPIC_MODEL_ID,
-                          max_tokens=2048, params={"temperature": 0.2})
+                          max_tokens=2048)
 
 
 # ---------------------------------------------------------------- policy agent
@@ -45,6 +52,11 @@ def build_model():
 def search_policy(question: str) -> str:
     """Retrieve the policy passages relevant to a dispute question."""
     hits = retrieval.search(question, k=4)
+    bucket = SOURCES.get()
+    if bucket is not None:
+        for h in hits:
+            if h["source"] not in bucket:
+                bucket.append(h["source"])
     db.log(CURRENT.get(), "policy_agent", "retrieved policy",
            "\n".join(f"- {h['source']}" for h in hits) or "(nothing found)")
     if not hits:
@@ -104,8 +116,10 @@ def make_case_agent(model, policy_agent):
             "a human reviewer, and you must use it whenever a provisional credit is warranted.\n"
             "Escalate to the fraud team instead of resolving routinely when the policy's escalation "
             "triggers are met.\n"
-            "Finish with a short draft message to the member: what happens next, by when, and the "
-            "case reference. Never include full card or account numbers, only the last four digits. "
-            "Do not admit liability before the investigation concludes."
+            "Finish your reply with your internal triage notes, then a line containing exactly "
+            f"{MEMBER_MARKER} and nothing else, then the message to the member and nothing after it.\n"
+            "The member message states what happens next, by when, and the case reference. Never "
+            "include full card or account numbers, only the last four digits. Do not admit liability "
+            "before the investigation concludes."
         ),
     )

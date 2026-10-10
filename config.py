@@ -2,7 +2,10 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 ROOT = Path(__file__).parent
+load_dotenv(ROOT / ".env")          # every entry point picks this up
 DB_PATH = ROOT / "dispute.db"
 POLICY_DIR = ROOT / "policies"
 CHROMA_DIR = ROOT / ".chroma"
@@ -10,7 +13,7 @@ CHROMA_DIR = ROOT / ".chroma"
 # Which model backend to use: "bedrock" (the real target) or "anthropic" (works without AWS).
 MODEL_PROVIDER = os.getenv("MODEL_PROVIDER", "bedrock")
 BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "us.anthropic.claude-sonnet-4-5-20250929-v1:0")
-ANTHROPIC_MODEL_ID = os.getenv("ANTHROPIC_MODEL_ID", "claude-sonnet-4-5")
+ANTHROPIC_MODEL_ID = os.getenv("ANTHROPIC_MODEL_ID", "claude-sonnet-5")
 AWS_REGION = os.getenv("AWS_REGION", "us-west-2")
 
 # Embeddings: "local" uses Chroma's built-in model, "titan" uses Bedrock.
