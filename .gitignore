@@ -7,3 +7,4 @@ dispute.db-wal
 dispute.db-shm
 .env
 .DS_Store
+outbox/

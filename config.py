@@ -26,3 +26,13 @@ GUARDRAIL_VERSION = os.getenv("GUARDRAIL_VERSION", "DRAFT")
 
 # Any provisional credit at or above this needs a human, no exceptions.
 AUTO_APPROVE_CEILING_CENTS = 0      # 0 means every money movement needs approval
+
+# ---- member notifications -------------------------------------------------
+# Leave SMTP_HOST unset and decisions are written to outbox/ instead of sent.
+SMTP_HOST = os.getenv("SMTP_HOST", "")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "465"))
+SMTP_USER = os.getenv("SMTP_USER", "")
+SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER)
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+# macOS only: read the password from Keychain instead of putting it in .env
+SMTP_KEYCHAIN_SERVICE = os.getenv("SMTP_KEYCHAIN_SERVICE", "")

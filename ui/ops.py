@@ -6,6 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import streamlit as st
 import db
+import notify
 
 st.set_page_config(page_title="Dispute operations", page_icon="🏦", layout="wide")
 db.init()
@@ -71,13 +72,22 @@ with right:
     if decided:
         dec = db.latest_decision(d["id"])
         st.success(f"Already {dec['decision']} by {dec['reviewer']} on {dec['created_at'][:16]}")
+        kind, detail = st.session_state.pop("last_notice", (None, None))
+        if kind == "sent":
+            st.info(f"Member notified: {detail}")
+        elif kind == "outbox":
+            st.warning(f"SMTP is not configured, so nothing was sent. {detail}")
     else:
         c1, c2 = st.columns(2)
+        def finish(decision):
+            db.decide(d["id"], decision, reviewer, note, body)
+            sent, detail = notify.send_decision(d["id"])
+            st.session_state["last_notice"] = ("sent" if sent else "outbox", detail)
+            st.rerun()
+
         if c1.button("Approve", type="primary", use_container_width=True, disabled=not reviewer):
-            db.decide(d["id"], "approved", reviewer, note, body)
-            st.rerun()
+            finish("approved")
         if c2.button("Deny", use_container_width=True, disabled=not reviewer):
-            db.decide(d["id"], "denied", reviewer, note, body)
-            st.rerun()
+            finish("denied")
         if not reviewer:
             st.caption("Enter your name in the sidebar to decide.")
