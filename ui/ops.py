@@ -1,6 +1,7 @@
 """Bank side app: watch the agents work, then approve or deny."""
 import json
 import sys
+import time
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -19,6 +20,17 @@ reviewer = st.sidebar.text_input("Reviewer", value="", placeholder="your name")
 show = st.sidebar.radio("Queue", ["Awaiting approval", "All"], index=0)
 if st.sidebar.button("Refresh"):
     st.rerun()
+
+# Cases in flight: poll so the queue appears without clicking. Stops once everything is
+# waiting on a human, so it never reruns the page while a reviewer is typing a note.
+in_flight = [r for r in db.list_disputes() if r["status"] in ("submitted", "processing")]
+live = st.sidebar.toggle("Live updates", value=True,
+                         help="Polls every 3s while cases are being triaged")
+if in_flight:
+    st.sidebar.caption(f"{len(in_flight)} case(s) being triaged...")
+    if live:
+        time.sleep(3)
+        st.rerun()
 
 rows = db.list_disputes(status="awaiting_approval") if show == "Awaiting approval" else db.list_disputes()
 st.sidebar.caption(f"{len(rows)} case(s)")
