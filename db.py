@@ -6,6 +6,8 @@ swapped for DynamoDB later without touching the agents or the UI.
 import json
 import sqlite3
 from datetime import datetime, timezone
+
+import guardrails
 from config import DB_PATH
 
 SCHEMA = """
@@ -74,6 +76,13 @@ def init():
 
 
 def create_dispute(**kw) -> int:
+    """Redaction happens HERE, at the intake boundary. Anything a member types is masked
+    before it is written, so raw card numbers, SSNs and account numbers never reach the
+    database, the reviewer's screen, a log line, or a model prompt."""
+    reason, found_r = guardrails.redact(kw.get("reason", ""))
+    description, found_d = guardrails.redact(kw.get("description", ""))
+    redacted = sorted(set(found_r + found_d))
+    kw = {**kw, "reason": reason, "description": description}
     with conn() as c:
         cur = c.execute(
             """INSERT INTO disputes (case_type, member_name, member_email, txn_id, amount_cents,
@@ -82,7 +91,11 @@ def create_dispute(**kw) -> int:
             (kw.get("case_type", "card_dispute"),
              kw["member_name"], kw["member_email"], kw["txn_id"], kw["amount_cents"],
              kw.get("merchant", ""), kw["reason"], kw.get("description", ""), now(), now()))
-        return cur.lastrowid
+        dispute_id = cur.lastrowid
+    if redacted:
+        log(dispute_id, "guardrail", "masked sensitive data at intake",
+            "Never stored: " + ", ".join(redacted))
+    return dispute_id
 
 
 def set_status(dispute_id: int, status: str):
