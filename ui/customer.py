@@ -7,6 +7,11 @@ import streamlit as st
 import db
 import fixtures
 
+CASE_LABELS = {
+    "card_dispute": "A card transaction",
+    "insurance_tracking": "An insurance charge on my mortgage escrow",
+}
+
 st.set_page_config(page_title="Member disputes", page_icon="💳", layout="centered")
 db.init()
 
@@ -28,6 +33,36 @@ if not email:
 tab_new, tab_mine = st.tabs(["Raise a dispute", "My disputes"])
 
 with tab_new:
+    case_type = st.radio("What are you disputing?", list(CASE_LABELS),
+                         format_func=CASE_LABELS.get, horizontal=True)
+
+    if case_type == "insurance_tracking":
+        with st.form("ins"):
+            name = st.text_input("Your name")
+            loan = st.selectbox("Loan", list(fixtures.LOANS.keys()),
+                                format_func=lambda l: f"{l} · {fixtures.LOANS[l]['property']}")
+            reason = st.selectbox("What is wrong?", [
+                "I had my own insurance the whole time",
+                "I never received the notices about this charge",
+                "The premium charged is wrong",
+            ])
+            description = st.text_area("Tell us what happened", height=120,
+                                       placeholder="When did your own policy start, and which carrier?")
+            submitted_ins = st.form_submit_button("Submit dispute", type="primary")
+        if submitted_ins:
+            if not name.strip():
+                st.error("Please enter your name.")
+            else:
+                ln = fixtures.LOANS[loan]
+                did = db.create_dispute(case_type="insurance_tracking", member_name=name.strip(),
+                                        member_email=email.strip(), txn_id=loan,
+                                        amount_cents=ln["lender_placed_premium_cents"],
+                                        merchant="Lender-placed insurance premium",
+                                        reason=reason, description=description.strip())
+                st.success(f"Dispute raised. Your case reference is **D-{did}**.")
+                st.caption("Check the My disputes tab for progress.")
+        st.stop()
+
     with st.form("dispute"):
         name = st.text_input("Your name")
         txn = st.selectbox("Transaction", list(fixtures.TRANSACTIONS.keys()),
@@ -49,7 +84,8 @@ with tab_new:
             st.error("Please enter your name.")
         else:
             t = fixtures.TRANSACTIONS[txn]
-            did = db.create_dispute(member_name=name.strip(), member_email=email.strip(),
+            did = db.create_dispute(case_type="card_dispute",
+                                    member_name=name.strip(), member_email=email.strip(),
                                     txn_id=txn, amount_cents=t["amount_cents"],
                                     merchant=t["merchant"], reason=reason, description=description.strip())
             st.success(f"Dispute raised. Your case reference is **D-{did}**.")

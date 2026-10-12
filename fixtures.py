@@ -14,3 +14,20 @@ TRANSACTIONS = {
 
 def get(txn_id: str):
     return TRANSACTIONS.get(txn_id, {"error": f"no transaction {txn_id}"})
+
+
+LOANS = {
+    "ln_40881": {"loan_id": "ln_40881", "property": "400 N 2nd Ave, Phoenix AZ 85003",
+                 "lender_placed_premium_cents": 184500, "charged_on": "2026-09-15",
+                 "first_notice_sent": "2026-07-28", "second_notice_sent": "2026-08-29",
+                 "coverage_on_file": None, "escrow_balance_cents": 212000},
+    "ln_51720": {"loan_id": "ln_51720", "property": "1180 Camino Real, San Antonio TX 78216",
+                 "lender_placed_premium_cents": 96000, "charged_on": "2026-09-02",
+                 "first_notice_sent": "2026-08-20",          # only 13 days before the charge
+                 "second_notice_sent": None,
+                 "coverage_on_file": None, "escrow_balance_cents": 143000},
+}
+
+
+def get_loan(loan_id: str):
+    return LOANS.get(loan_id, {"error": f"no loan {loan_id}"})

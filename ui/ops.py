@@ -12,6 +12,8 @@ import notify
 st.set_page_config(page_title="Dispute operations", page_icon="🏦", layout="wide")
 db.init()
 
+CASE_LABEL = {"card_dispute": "Card dispute", "insurance_tracking": "Insurance tracking"}
+
 ACTOR_ICON = {"case_agent": "🧭", "policy_agent": "📘", "guardrail": "🛡️",
               "system": "⚙️", "reviewer": "🧑‍⚖️"}
 
@@ -47,9 +49,12 @@ d = db.get_dispute(choice)
 left, right = st.columns([1, 1])
 
 with left:
+    ctype = d["case_type"] if "case_type" in d.keys() else "card_dispute"
     st.subheader(f"D-{d['id']}  ·  {d['status'].replace('_', ' ')}")
+    st.caption(CASE_LABEL.get(ctype, ctype))
     st.markdown(f"**{d['member_name']}** · {d['member_email']}")
-    st.markdown(f"{d['txn_id']} · **${d['amount_cents']/100:,.2f}** · {d['merchant']}")
+    ref = "Loan" if ctype == "insurance_tracking" else "Txn"
+    st.markdown(f"{ref} {d['txn_id']} · **${d['amount_cents']/100:,.2f}** · {d['merchant']}")
     st.caption(d["reason"])
     if d["description"]:
         st.write(d["description"])

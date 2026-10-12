@@ -65,13 +65,21 @@ def process(dispute_id: int) -> str:
         policy_agent = agents.make_policy_agent(model)
         case_agent = agents.make_case_agent(model, policy_agent)
 
+        case_type = d["case_type"] if "case_type" in d.keys() else "card_dispute"
+        if case_type == "insurance_tracking":
+            subject = (f"Loan: {d['txn_id']}\n"
+                       f"Lender-placed premium charged: ${d['amount_cents']/100:,.2f}")
+        else:
+            subject = (f"Transaction: {d['txn_id']} for ${d['amount_cents']/100:,.2f} "
+                       f"at {d['merchant'] or 'unknown merchant'}")
         prompt = (
             f"Case reference: D-{dispute_id}\n"
+            f"Case type: {case_type}\n"
             f"Member: {d['member_name']}\n"
-            f"Transaction: {d['txn_id']} for ${d['amount_cents']/100:,.2f} at {d['merchant'] or 'unknown merchant'}\n"
-            f"Dispute type: {d['reason']}\n"
+            f"{subject}\n"
+            f"Complaint: {d['reason']}\n"
             f"Member says: {safe_text}\n\n"
-            "Triage this dispute."
+            "Triage this case."
         )
         db.log(dispute_id, "case_agent", "started", prompt)
         answer = str(case_agent(prompt))

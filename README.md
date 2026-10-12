@@ -1,8 +1,21 @@
 # Dispute triage: two agents, a human, and an audit trail
 
-A working demo of agentic AI inside a regulated workflow. A member disputes a card
-transaction, two agents triage it against policy, and a bank reviewer approves or
-denies before anything moves. The member then sees the outcome and what happens next.
+A working demo of agentic AI inside a regulated workflow. A customer raises a case,
+two agents triage it against policy, and a reviewer approves or denies before anything
+moves. The customer then sees the outcome and what happens next.
+
+Two case types ship with it, to show the pattern is not tied to one product:
+
+- **Card dispute.** Unauthorized or merchant disputes, reasoned against Regulation E
+  style timing and liability tiers.
+- **Insurance tracking.** A borrower disputes a lender-placed insurance premium charged
+  to escrow. The agent checks the notice timeline first, because a missed notice
+  invalidates the charge on its own, regardless of whether coverage actually lapsed.
+
+The second case is the interesting one: on the seeded loan the first notice went out 13
+days before the charge instead of the required 45, and the second never went at all. The
+agent finds that, calls the charge invalid, and escalates to servicing compliance rather
+than the fraud team, without the borrower ever alleging a notice problem.
 
 Built with [Strands Agents](https://strandsagents.com/), deployable to Amazon
 Bedrock AgentCore Runtime, and runnable end to end on a laptop with no AWS account.

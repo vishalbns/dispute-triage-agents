@@ -87,6 +87,14 @@ def get_transaction(txn_id: str) -> dict:
     return data
 
 
+@tool
+def get_loan(loan_id: str) -> dict:
+    """Look up a mortgage loan: escrow, lender-placed premium and the notice dates. Read only."""
+    data = fixtures.get_loan(loan_id)
+    db.log(CURRENT.get(), "case_agent", f"looked up {loan_id}", data)
+    return data
+
+
 def make_case_agent(model, policy_agent):
     @tool
     def ask_policy(question: str) -> str:
@@ -98,7 +106,7 @@ def make_case_agent(model, policy_agent):
 
     @tool
     def queue_provisional_credit(txn_id: str, amount_cents: int, rationale: str) -> str:
-        """Queue a provisional credit for human approval. This does NOT move money."""
+        """Queue a credit or refund for human approval. This does NOT move money."""
         db.log(CURRENT.get(), "case_agent", f"queued provisional credit {amount_cents} cents",
                f"txn {txn_id}\n\n{rationale}")
         return (f"Queued {amount_cents} cents on {txn_id} for reviewer approval. "
@@ -107,11 +115,15 @@ def make_case_agent(model, policy_agent):
     return Agent(
         name="case",
         model=model,
-        tools=[get_transaction, ask_policy, queue_provisional_credit],
+        tools=[get_transaction, get_loan, ask_policy, queue_provisional_credit],
         system_prompt=(
-            "You triage member transaction disputes at a financial institution.\n"
-            "Process: look up the transaction, ask the policy agent what the rules require for "
-            "this dispute type and timing, then decide a recommendation.\n"
+            "You triage member cases at a financial institution. Two kinds reach you:\n"
+            "  card_dispute: a disputed card transaction. Use get_transaction.\n"
+            "  insurance_tracking: a borrower disputes a lender-placed insurance premium charged "
+            "to escrow. Use get_loan, and check the notice dates against the policy before "
+            "anything else, because a missed notice invalidates the charge on its own.\n"
+            "Process: look up the record, ask the policy agent what the rules require for this "
+            "case type and timing, then decide a recommendation.\n"
             "You may NEVER move money. The only money related tool you have queues a request for "
             "a human reviewer, and you must use it whenever a provisional credit is warranted.\n"
             "Escalate to the fraud team instead of resolving routinely when the policy's escalation "

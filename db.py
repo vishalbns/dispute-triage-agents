@@ -11,6 +11,7 @@ from config import DB_PATH
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS disputes (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  case_type     TEXT NOT NULL DEFAULT 'card_dispute',
   member_name   TEXT NOT NULL,
   member_email  TEXT NOT NULL,
   txn_id        TEXT NOT NULL,
@@ -67,15 +68,19 @@ def conn():
 def init():
     with conn() as c:
         c.executescript(SCHEMA)
+        cols = [r["name"] for r in c.execute("PRAGMA table_info(disputes)")]
+        if "case_type" not in cols:        # upgrade a database created before case types
+            c.execute("ALTER TABLE disputes ADD COLUMN case_type TEXT NOT NULL DEFAULT 'card_dispute'")
 
 
 def create_dispute(**kw) -> int:
     with conn() as c:
         cur = c.execute(
-            """INSERT INTO disputes (member_name, member_email, txn_id, amount_cents,
+            """INSERT INTO disputes (case_type, member_name, member_email, txn_id, amount_cents,
                merchant, reason, description, status, created_at, updated_at)
-               VALUES (?,?,?,?,?,?,?,'submitted',?,?)""",
-            (kw["member_name"], kw["member_email"], kw["txn_id"], kw["amount_cents"],
+               VALUES (?,?,?,?,?,?,?,?,'submitted',?,?)""",
+            (kw.get("case_type", "card_dispute"),
+             kw["member_name"], kw["member_email"], kw["txn_id"], kw["amount_cents"],
              kw.get("merchant", ""), kw["reason"], kw.get("description", ""), now(), now()))
         return cur.lastrowid
 
