@@ -3,6 +3,7 @@ doc_id: P-007
 title: Servicing Request and Error Resolution Timing
 effective: 2026-01-01
 status: current
+synthetic: true  # illustrative example written for a demo; not any company's actual policy
 ---
 
 # P-007 Servicing Request and Error Resolution Timing

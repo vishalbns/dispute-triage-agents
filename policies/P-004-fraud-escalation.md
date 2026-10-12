@@ -3,6 +3,7 @@ doc_id: P-004
 title: Fraud Indicators and Escalation
 effective: 2026-02-01
 status: current
+synthetic: true  # illustrative example written for a demo; not any company's actual policy
 ---
 
 # P-004 Fraud Indicators and Escalation

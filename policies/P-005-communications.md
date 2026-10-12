@@ -3,6 +3,7 @@ doc_id: P-005
 title: Member Communications Standards
 effective: 2026-01-01
 status: current
+synthetic: true  # illustrative example written for a demo; not any company's actual policy
 ---
 
 # P-005 Member Communications Standards

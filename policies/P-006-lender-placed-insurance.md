@@ -3,6 +3,7 @@ doc_id: P-006
 title: Lender-Placed Insurance and Insurance Tracking
 effective: 2026-01-01
 status: current
+synthetic: true  # illustrative example written for a demo; not any company's actual policy
 ---
 
 # P-006 Lender-Placed Insurance and Insurance Tracking

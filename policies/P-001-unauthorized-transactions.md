@@ -3,6 +3,7 @@ doc_id: P-001
 title: Unauthorized Electronic Transactions
 effective: 2026-01-01
 status: current
+synthetic: true  # illustrative example written for a demo; not any company's actual policy
 ---
 
 # P-001 Unauthorized Electronic Transactions

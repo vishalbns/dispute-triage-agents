@@ -3,6 +3,7 @@ doc_id: P-003
 title: Provisional Credit and Approval Authority
 effective: 2026-03-15
 status: current
+synthetic: true  # illustrative example written for a demo; not any company's actual policy
 ---
 
 # P-003 Provisional Credit and Approval Authority

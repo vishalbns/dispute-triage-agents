@@ -1,5 +1,12 @@
 # Dispute triage: two agents, a human, and an audit trail
 
+> **Unaffiliated demo.** This is an independent prototype built to show an agentic
+> workflow end to end. It is not affiliated with, endorsed by, or operated by SWBC, and
+> it is not SWBC software. Every policy, loan, transaction and member in this repository
+> is synthetic and was written for this demo. The policy documents are illustrative
+> examples modelled on published federal rules, not any company's actual policies.
+
+
 A working demo of agentic AI inside a regulated workflow. A customer raises a case,
 two agents triage it against policy, and a reviewer approves or denies before anything
 moves. The customer then sees the outcome and what happens next.

@@ -3,6 +3,7 @@ doc_id: P-002
 title: Merchant and Service Disputes
 effective: 2026-01-01
 status: current
+synthetic: true  # illustrative example written for a demo; not any company's actual policy
 ---
 
 # P-002 Merchant and Service Disputes

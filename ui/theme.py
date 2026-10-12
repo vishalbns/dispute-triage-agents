@@ -1,11 +1,16 @@
 """Shared look for both portals.
 
-Deliberately a fictional institution. This is a demo on public code, so it must not
-carry any real company's name or marks.
+The brand name is a real company, so every surface has to say plainly that this is an
+unaffiliated prototype on synthetic data: the banner on each page, the chip in the
+header, and the README. No real logo, wordmark, colours or domain are used, and no
+policy document here is attributed to the company.
 """
 import streamlit as st
 
-BRAND = "Harborline Credit Union"
+# Shown in the header and page title. The name carries its own disclaimer so a
+# screenshot of any single screen cannot be mistaken for real SWBC software.
+BRAND = "SWBC (not real)"
+COMPANY = "SWBC"  # used in the non-affiliation sentence, where the suffix reads oddly
 INK = "#16202A"
 PRIMARY = "#1F7A63"
 MUTED = "#5E6974"
@@ -79,9 +84,10 @@ def page(title: str, icon: str, portal: str, wide=False):
 
 def demo_note(extra: str = ""):
     st.markdown(
-        f'<div class="demo"><b>Demonstration only.</b> {BRAND} is a fictional institution. '
-        f'Policies, loans and transactions here are synthetic, and no real account is touched. '
-        f'{extra}</div>', unsafe_allow_html=True)
+        f'<div class="demo"><b>Demonstration only.</b> An independent prototype, not '
+        f'affiliated with, endorsed by or operated by {COMPANY}. The policies, loans, '
+        f'transactions and members here are synthetic, written for this demo, and no real '
+        f'account or member data is involved. {extra}</div>', unsafe_allow_html=True)
 
 
 def pill(status: str) -> str:
